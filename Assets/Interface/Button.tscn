@@ -1,0 +1,11 @@
+[gd_scene format=2]
+
+[node name="Button" type="Button"]
+margin_left = -1.33635
+margin_top = -0.890896
+margin_right = 76.6637
+margin_bottom = 19.1091
+text = "Graph"
+__meta__ = {
+"_edit_use_anchors_": false
+}

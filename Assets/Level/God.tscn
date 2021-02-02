@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://Scripts/God.gd" type="Script" id=1]
+
+[sub_resource type="SphereShape" id=1]
+
+[node name="God" type="KinematicBody"]
+script = ExtResource( 1 )
+
+[node name="Head" type="Spatial" parent="."]
+transform = Transform( 1, 0, 0, 0, 0.346657, 0.937992, 0, -0.937992, 0.346657, 0, -0.423572, 0 )
+
+[node name="Camera" type="Camera" parent="Head"]
+
+[node name="CollisionShape" type="CollisionShape" parent="."]
+transform = Transform( 0.472878, 0, 0, 0, 0.39424, 0, 0, 0, 0.443219, 0, 0, 0 )
+shape = SubResource( 1 )

@@ -1,0 +1,93 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://Scripts/Interface/SpeedChart.gd" type="Script" id=1]
+
+[sub_resource type="DynamicFontData" id=2]
+font_path = "res://Fonts/Spartan-VariableFont_wght.ttf"
+
+[sub_resource type="DynamicFont" id=1]
+size = 25
+outline_color = Color( 0.847059, 0.847059, 0.847059, 1 )
+font_data = SubResource( 2 )
+
+[node name="line_chart" type="GridContainer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 8.0
+margin_right = -754.0
+margin_bottom = -528.0
+columns = 3
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+line_color = Color( 0.768627, 0.768627, 0.768627, 1 )
+bg_color = Color( 0, 0, 0, 0.419608 )
+x_label = "my x label"
+y_label = "my y label"
+
+[node name="y_ticks_container" type="VBoxContainer" parent="."]
+margin_bottom = 182.0
+
+[node name="line_container" type="Control" parent="."]
+margin_left = 4.0
+margin_right = 514.0
+margin_bottom = 182.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="background" type="ColorRect" parent="line_container"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = -84.0
+margin_top = -1.0
+margin_right = 19.0
+margin_bottom = 52.0
+color = Color( 0, 0, 0, 0.419608 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Control" type="Control" parent="line_container"]
+margin_left = -6.60713
+margin_right = 501.393
+margin_bottom = 182.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="placeholder" type="Control" parent="."]
+margin_left = 518.0
+margin_right = 518.0
+margin_bottom = 182.0
+
+[node name="placeholder2" type="Control" parent="."]
+margin_top = 186.0
+margin_bottom = 186.0
+
+[node name="x_ticks_container" type="HBoxContainer" parent="."]
+margin_left = 4.0
+margin_top = 186.0
+margin_right = 514.0
+margin_bottom = 186.0
+
+[node name="placeholder3" type="Control" parent="."]
+margin_left = 518.0
+margin_top = 186.0
+margin_right = 518.0
+margin_bottom = 186.0
+
+[node name="placeholder4" type="Control" parent="."]
+margin_top = 190.0
+margin_bottom = 192.0
+
+[node name="x_label" type="Label" parent="."]
+margin_left = 4.0
+margin_top = 190.0
+margin_right = 514.0
+margin_bottom = 192.0
+size_flags_vertical = 1
+custom_fonts/font = SubResource( 1 )
+align = 1
+valign = 1
+uppercase = true
