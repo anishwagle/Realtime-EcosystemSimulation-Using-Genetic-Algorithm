@@ -1,0 +1,28 @@
+[gd_scene format=2]
+
+[node name="Eyes" type="Control"]
+margin_right = 21.0
+margin_bottom = 17.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ViewportContainer" type="ViewportContainer" parent="."]
+margin_left = 0.256399
+margin_top = 0.109777
+margin_right = 15.2564
+margin_bottom = 10.1098
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Viewport" type="Viewport" parent="ViewportContainer"]
+size = Vector2( 30, 30 )
+transparent_bg = true
+handle_input_locally = false
+hdr = false
+render_target_update_mode = 3
+
+[node name="Camera" type="Camera" parent="ViewportContainer/Viewport"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.332174, -0.271639 )
+near = 0.37

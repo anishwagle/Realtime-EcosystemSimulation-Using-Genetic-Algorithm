@@ -3,7 +3,7 @@ var timer
 
 func _ready():
 	randomize()
-	timer = get_tree().create_timer(rand_range(10,20))
+	timer = get_tree().create_timer(rand_range(30,50))
 
 func _process(delta):
 	if timer.time_left <= 0.0:

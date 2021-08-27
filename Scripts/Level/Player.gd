@@ -1,20 +1,18 @@
 extends KinematicBody
 signal newGeneration(oldGen)
 signal newTraits(traits)
-
+var neuron = preload("res://Scripts/lib/NN.gd")
 onready var healthBar = $HealthBar3D/Viewport/HealthBar
 onready var Gen = $HealthBar3D/Viewport/HealthBar/Generation/GenNumber
 onready var Traits = $HealthBar3D/Viewport/HealthBar/Speed/SpeedNumber
 onready var health = $Health
-onready var eyes = $Eyes/RayCast
-onready var vision = $Vision/CollisionShape
+var ai_data = "user://score.save"
 
-onready var player = load("res://Assets/Level/Player.tscn")
 
 var traits = {
-	"speed":rand_range(50,100),
-	"vision_position":rand_range(-1,1),
-	"vision_size":5,
+	"id":0,
+	"gender":'M',
+	"speed":rand_range(20,40),
 	"size":rand_range(0.4,0.6)
 }
 
@@ -22,22 +20,30 @@ var gen=0
 var food_counter = 0
 var trackTimer = 0
 var size = 14
-var rotationSpeed = 100
-var is_walking = false
-var is_rotating = false
 var gravity = 12
-var vector_gravity=Vector3()
+var velocity=Vector3()
 var random = RandomNumberGenerator.new()
 var rotationTime
 var globalDelta = 0
-var looking_at = false
+var ReproductionDesire = 0 
+var NeuralNetwork 
+
+var Age=0
+var noOfClild=0
+var timer
+
+onready var vp = get_node("Eyes/ViewportContainer/Viewport")
 
 func _ready():
-	eyes.cast_to = Vector3(0,0,-traits.vision_size + traits.vision_position )
+	timer = get_tree().create_timer(5)
+	var img = vp.get_texture().get_data()
+	img.flip_y()
+	var height = img.get_height()
+	var width = img.get_width()
+	var camera = vp.get_child(0)
+	camera.near = traits.size+0.01
 	scale = Vector3(traits.size,traits.size,traits.size)
-	vision.transform.origin.z = traits.vision_position
-	vision.shape.radius = (traits.vision_size)
-	
+
 	health.connect("CurrentAmountChanged",healthBar,"set_value")
 	health.connect("maxAmountChanged",healthBar,"set_max")
 	
@@ -54,133 +60,87 @@ func _ready():
 func _process(delta):
 	globalDelta = delta
 	random.randomize()
-	if not is_on_floor():
-		vector_gravity.y-=gravity*delta
-	move_and_slide(vector_gravity,Vector3.UP)
+	var camera = vp.get_child(0)
 	
+	if timer.time_left <= 0.0:
+		Age+=1
+		timer = get_tree().create_timer(5)
+	var result =DecisionMaking()
+#	for i in range(len(result)):
+#		result[i]=result[i]/100000000
+	velocity = -transform.basis.z*result[0]*traits.speed
+	if not is_on_floor():
+		velocity.y-=gravity*delta
+	move_and_slide(velocity.normalized(),Vector3.UP)
+
+	camera.transform.origin=transform.origin 
+	camera.rotate_y(-lerp(0,traits.speed/200,result[1]))
+	rotate_y(-lerp(0,traits.speed/200,result[1]))
+
+	if(result[2]<0):
+		ReproductionDesire=0
+	else:
+		ReproductionDesire=1
 	LifeCycle(delta)
-	Mutation()
-	Wandering()
-	if(!is_rotating):
-		if(eyes.is_colliding()):
-			var item = eyes.get_collider()
-			if(item != null):
-				if(item.is_in_group("Food")):
-					look_at(Vector3(item.global_transform.origin.x,global_transform.origin.y,item.global_transform.origin.z),Vector3.UP)
-				else:
-					Rotate()
-			else:
-				Rotate()
-		else:
-			Rotate()
-		is_rotating = true
-	move_and_slide(-transform.basis.z*(traits.speed+traits.size*2)*delta,Vector3.UP)
-		
-func Rotate(index=random.randi_range(0,1)):
-	var list = [-1,1]
-	rotate_y(deg2rad(lerp(0,rotationSpeed*list[index],1)))
-	is_rotating = true
 
-func Wandering():
-	if rotationTime.time_left <= 0.0:
-		rotationTime = get_tree().create_timer(random.randi_range(1,8))
-		is_rotating = false
-
+func DecisionMaking():
+	var input = []
+	var img = vp.get_texture().get_data()
+	img.flip_y()
+	var height = img.get_height()
+	var width = img.get_width()
+	img.lock()
+	for i in range(height):
+		for j in range(width):
+			input.append(rgbToDecimal(img.get_pixel(i,j)))
+	input.append(health.currentAmount)
+	input.append(ReproductionDesire)
+	var output = NeuralNetwork.Run(input)
+	return output
 func LifeCycle(delta):
-	health.currentAmount -=(1+traits.speed*traits.size*traits.size/50 )*delta
+	health.currentAmount -=(1 +traits.speed*traits.size*traits.size/50 )*delta
 	if health.currentAmount <= 0 :
+		var data = {
+			"gender":"M",
+			"fitness": Age+noOfClild*2,
+			"NN":NeuralNetwork.GetNN()
+		}
+		var file = File.new()
+		var AllData =[]
+		if file.file_exists(ai_data):
+			file.open(ai_data, File.READ)
+			AllData = file.get_var(true)
+			file.close()
+			var male = []
+			for x in AllData :
+				if (x.gender=="M"):
+					male.append(x)
+			
+			if(len(male)==2):
+				var index =-1
+				for i in range(len(AllData)):
+					if(AllData[i].gender=="M" and AllData[i].fitness<data.fitness):
+						index=i
+				if(index!=-1):
+					AllData[index]=data
+			else:
+				AllData.append(data)
+		else:
+				AllData.append(data)
+		file.open(ai_data, File.WRITE)
+		file.store_var(AllData, true)
+		file.close()
 		queue_free()
 
 func Regenerate(ammount):
-	food_counter +=1
 	health.currentAmount += ammount
-	is_rotating = false
-	rotationTime.set_time_left(trackTimer) 
-	looking_at = false
 
-
-
-func Mutation():
-	if(food_counter>=14):
-		var play = player.instance();
-		play.traits = deep_copy(traits)
-		var map = 14
-		var location = Vector3()
-		if(transform.origin.x+1>map):
-			location.x = transform.origin.x-1
-		else:
-			location.x = transform.origin.x+1
-		location.y=2
-		if(transform.origin.z+1>map):
-			location.z = transform.origin.z-1
-		else:
-			location.z = transform.origin.z+1
-		
-		play = DefineTraits(play)
-		
-		
-		var v = play.get_node("Vision").get_child(0)
-		v.transform.origin.z = play.traits.vision_position
-		play.scale = Vector3(play.traits.size,play.traits.size,play.traits.size) 
-		play.transform.origin = location
-		
-		play.emit_signal("newGeneration",gen)
-		play.emit_signal("newTraits",traits)
-		var collection = self.get_parent()
-		
-		collection.add_child(play)
-		food_counter = 0
-		
-
-	
-func DefineTraits(play):
-
-	play.gen=gen+1
-	var ran =int( rand_range(0,3))
-	if ran == 0:
-
-		play.traits.size= traits.size + rand_range(-0.1,0.1)
-	elif ran == 1:
-
-		play.traits.speed = traits.speed + rand_range(-20,20)
-#		play.traits.vision_size = abs(traits.vision_size + rand_range(-1,1))
-	elif ran == 2:
-		play.traits.vision_position = traits.vision_position + rand_range(-1,1)
-		if(abs(play.traits.vision_position)<=play.traits.vision_size):
-			if(play.traits.vision_position<0):
-				play.traits.vision_position = traits.vision_position + rand_range(0,1)
-			else:
-				play.traits.vision_position = traits.vision_position + rand_range(-1,0)
-	
-	return play
-	
-func food_required():
-	if(eyes.is_colliding()):
-		var item = eyes.get_collider()
-		if(item != null):
-			if(item.is_in_group("Food")):
-				return false
-	return true
-
-func _on_Vision_area_entered(area):
-	if(food_required() and area.is_in_group("Food")):
-		is_rotating = true
-		trackTimer = rotationTime.get_time_left() 
-		rotationTime.set_time_left(rand_range(2,10)) 
-		look_at(Vector3(area.global_transform.origin.x,global_transform.origin.y,area.global_transform.origin.z),Vector3.UP)
-		looking_at =true
-
-
-func _on_Vision_area_exited(area):
-	if(food_required() and area.is_in_group("Food")):
-		is_rotating = true
-		trackTimer = rotationTime.get_time_left() 
-		rotationTime.set_time_left(rand_range(2,10)) 
-		look_at(Vector3(area.global_transform.origin.x,global_transform.origin.y,area.global_transform.origin.z),Vector3.UP)
-		looking_at =true
-		
-		
-
+func WannaReproduce():
+	if(ReproductionDesire==1):
+		return true
+	else:
+		return false
+#
 static func deep_copy(v):
 	var t = typeof(v)
 
@@ -208,3 +168,20 @@ static func deep_copy(v):
 		# Other types should be fine,
 		# they are value types (except poolarrays maybe)
 		return v
+static func rgbToDecimal(img):
+	var result = (img[0] * 256 * 256* 256) + (img[1] * 256* 256) + (img[2]* 256) +img[3]
+	return result
+func GetTraits():
+	return traits
+
+
+
+func _on_Area_body_entered(body):
+	if(body.is_in_group("Player") and body.traits.id != traits.id and body.traits.gender == 'F' ):
+		if(ReproductionDesire==1):
+			if(body.WannaReproduce()):
+				ReproductionDesire=0
+#				noOfClild+=1
+#				body.Repoduction(traits)
+			else:
+				pass

@@ -10,19 +10,20 @@ config_version=4
 
 _global_script_classes=[  ]
 _global_script_class_icons={
-
 }
 
 [application]
 
 config/name="Realtime Ecosystem Simulation Using Genetic Algorithm"
 run/main_scene="res://Assets/Level/Main.tscn"
+run/low_processor_mode_sleep_usec=5900
 config/icon="res://icon.png"
 
 [display]
 
 window/size/width=1280
 window/size/height=720
+window/vsync/vsync_via_compositor=true
 window/stretch/mode="viewport"
 window/stretch/aspect="keep"
 
@@ -65,4 +66,11 @@ rotatemouse={
 
 [rendering]
 
+threads/thread_model=2
+quality/shading/force_vertex_shading=true
+quality/shading/force_lambert_over_burley=true
+quality/shading/force_blinn_over_ggx=true
+quality/filters/anisotropic_filter_level=1
+quality/filters/use_nearest_mipmap_filter=true
+quality/filters/msaa=3
 environment/default_environment="res://default_env.tres"

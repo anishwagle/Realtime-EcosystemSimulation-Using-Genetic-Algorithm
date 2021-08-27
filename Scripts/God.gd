@@ -1,5 +1,5 @@
 extends KinematicBody
-var speed = 7 
+var speed = 10 
 var acceleration = 20
 var gravity = 0
 var jump = 5
@@ -23,9 +23,6 @@ func _input(event):
 func _process(delta):
 	direction = Vector3()
 	
-	if not is_on_floor():
-		fall.y -=gravity*delta
-		
 	if(Input.is_action_just_pressed("jump")):
 		fall.y=jump
 	if(Input.is_action_just_pressed("ui_cancel")):
@@ -47,8 +44,6 @@ func _process(delta):
 		
 	direction = direction.normalized()
 	
-	velocity = velocity.linear_interpolate(direction*speed,acceleration*delta)
-	
-	velocity = move_and_slide(velocity,Vector3.UP)
-	move_and_slide(fall,Vector3.UP)
+	move_and_slide(direction*speed,Vector3.UP)
+
 		

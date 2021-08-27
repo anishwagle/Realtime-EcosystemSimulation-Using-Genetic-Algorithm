@@ -1,0 +1,28 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://Assets/Level/Env/Ground.tscn" type="PackedScene" id=1]
+[ext_resource path="res://Assets/Level/Env/Wall.tscn" type="PackedScene" id=2]
+
+[node name="Arena" type="Spatial"]
+
+[node name="Wall" parent="." groups=[
+"Wall",
+] instance=ExtResource( 2 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.18227, -14.1032 )
+
+[node name="Wall2" parent="." groups=[
+"Wall",
+] instance=ExtResource( 2 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.18227, 14.6535 )
+
+[node name="Wall3" parent="." groups=[
+"Wall",
+] instance=ExtResource( 2 )]
+transform = Transform( -4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 14.101, 2.18227, -0.484791 )
+
+[node name="Wall4" parent="." groups=[
+"Wall",
+] instance=ExtResource( 2 )]
+transform = Transform( -4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -13.9984, 2.18227, -0.484791 )
+
+[node name="Ground" parent="." instance=ExtResource( 1 )]
