@@ -8,6 +8,7 @@ onready var Traits = $HealthBar3D/Viewport/HealthBar/Speed/SpeedNumber
 onready var health = $Health
 
 var ai_data = "user://score.save"
+var generation = "user://gen.save"
 onready var player = load("res://Assets/Level/Player/Player.tscn")
 onready var player_f = load("res://Assets/Level/Player/Player_F.tscn")
 var traits = {
@@ -51,7 +52,10 @@ func _ready():
 	
 	connect("newGeneration",Gen,"UpdateGen")
 	connect("newTraits",Traits,"UpdateTraits")
-	
+	var file = File.new()
+	file.open(generation, File.READ)
+	gen = file.get_var(true)
+	file.close()
 	emit_signal("newGeneration",gen)
 	emit_signal("newTraits",traits)
 	
@@ -82,7 +86,7 @@ func _process(delta):
 	else:
 		ReproductionDesire=1
 		
-	LifeCycle(delta)
+	LifeCycle()
 	
 func DecisionMaking():
 	var input = []
@@ -99,8 +103,8 @@ func DecisionMaking():
 	var output = NeuralNetwork.Run(input)
 	return output
 
-func LifeCycle(delta):
-	health.currentAmount -=(1+traits.speed*traits.size*traits.size/50 )*delta
+func LifeCycle():
+	health.currentAmount -=(1+traits.speed*traits.size*traits.size/50 )*globalDelta
 	if health.currentAmount <= 0 :
 		var data = {
 			"gender":"F",
@@ -117,7 +121,7 @@ func LifeCycle(delta):
 			for x in AllData :
 				if (x.gender=="F"):
 					female.append(x)
-			if(len(female)==2):
+			if(len(female)==4):
 				var index =-1
 				for i in range(len(AllData)):
 					if(AllData[i].gender=="F" and AllData[i].fitness<data.fitness):

@@ -7,7 +7,7 @@ onready var Gen = $HealthBar3D/Viewport/HealthBar/Generation/GenNumber
 onready var Traits = $HealthBar3D/Viewport/HealthBar/Speed/SpeedNumber
 onready var health = $Health
 var ai_data = "user://score.save"
-
+var generation = "user://gen.save"
 
 var traits = {
 	"id":0,
@@ -49,7 +49,10 @@ func _ready():
 	
 	connect("newGeneration",Gen,"UpdateGen")
 	connect("newTraits",Traits,"UpdateTraits")
-	
+	var file = File.new()
+	file.open(generation, File.READ)
+	gen = file.get_var(true)
+	file.close()
 	emit_signal("newGeneration",gen)
 	emit_signal("newTraits",traits)
 	
@@ -116,7 +119,7 @@ func LifeCycle(delta):
 				if (x.gender=="M"):
 					male.append(x)
 			
-			if(len(male)==2):
+			if(len(male)==4):
 				var index =-1
 				for i in range(len(AllData)):
 					if(AllData[i].gender=="M" and AllData[i].fitness<data.fitness):
