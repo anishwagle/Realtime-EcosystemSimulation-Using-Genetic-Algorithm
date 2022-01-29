@@ -6,14 +6,14 @@ onready var healthBar = $HealthBar3D/Viewport/HealthBar
 onready var Gen = $HealthBar3D/Viewport/HealthBar/Generation/GenNumber
 onready var Traits = $HealthBar3D/Viewport/HealthBar/Speed/SpeedNumber
 onready var health = $Health
-var ai_data = "user://score.save"
+var ai_data = "user://fit.save"
 var generation = "user://gen.save"
 
 var traits = {
 	"id":0,
 	"gender":'M',
-	"speed":rand_range(20,40),
-	"size":rand_range(0.4,0.6)
+	"speed":40,
+	"size":0.5
 }
 
 var gen=0
@@ -77,8 +77,8 @@ func _process(delta):
 	move_and_slide(velocity.normalized(),Vector3.UP)
 
 	camera.transform.origin=transform.origin 
-	camera.rotate_y(-lerp(0,traits.speed/200,result[1]))
-	rotate_y(-lerp(0,traits.speed/200,result[1]))
+	camera.rotate_y(-lerp(0,traits.speed/20,result[1]))
+	rotate_y(-lerp(0,traits.speed/30,result[1]))
 
 	if(result[2]<0):
 		ReproductionDesire=0
@@ -100,6 +100,7 @@ func DecisionMaking():
 	input.append(ReproductionDesire)
 	var output = NeuralNetwork.Run(input)
 	return output
+	
 func LifeCycle(delta):
 	health.currentAmount -=(1 +traits.speed*traits.size*traits.size/50 )*delta
 	if health.currentAmount <= 0 :

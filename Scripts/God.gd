@@ -11,7 +11,8 @@ var velocity = Vector3()
 var fall= Vector3()
 onready var head = $Head
 func _ready():
-	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	mouse_on=true
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
 
 func _input(event):
@@ -41,6 +42,11 @@ func _process(delta):
 		direction-=transform.basis.x
 	elif(Input.is_action_pressed("move_right")):
 		direction+=transform.basis.x
+		
+	if(Input.is_action_pressed("move_up")):
+		direction+=transform.basis.y
+	elif(Input.is_action_pressed("move_down")):
+		direction-=transform.basis.y
 		
 	direction = direction.normalized()
 	

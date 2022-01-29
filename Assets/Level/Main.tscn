@@ -20,4 +20,4 @@ transform = Transform( 1.25, 0, 0, 0, 1, 0, 0, 0, 1.25, 0, -0.361076, 0 )
 script = ExtResource( 4 )
 
 [node name="God" parent="." instance=ExtResource( 3 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10, 15 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 27.9924, 0 )
