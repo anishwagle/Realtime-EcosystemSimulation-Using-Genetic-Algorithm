@@ -3,6 +3,7 @@ var random = RandomNumberGenerator.new()
 var player = preload("res://Assets/Level/Player/Player.tscn")
 var player_f = preload("res://Assets/Level/Player/Player_F.tscn")
 var neuron = preload("res://Scripts/lib/NN.gd")
+var testNeuron = preload("res://Scripts/lib/NeuralNetwork/NeuralNetwork.gd")
 var ai_data = "user://fit.save"
 var tem_population = "user://tem_fit.save"
 var gen = "user://gen.save"
@@ -13,6 +14,15 @@ var generation = 0
 var vHeight = 30
 var vWidth = 30
 var networkString
+func _ready():
+	var x =testNeuron.new(2,1)
+
+	x.AddNode(str(0)+"_"+str(2))
+	x.AddNode(str(3)+"_"+str(2))
+	x.RemoveConnection(str(0)+"_"+str(3))
+	var zzz = x.GetNN()
+	var yyy = 0
+	pass
 
 func _process(delta):
 	if(get_child_count()==0):
