@@ -15,12 +15,12 @@ var vHeight = 30
 var vWidth = 30
 var networkString
 func _ready():
-	var x =testNeuron.new(2,1)
+	var xxxx =testNeuron.new(2,1)
 
-	x.AddNode(str(0)+"_"+str(2))
-	x.AddNode(str(3)+"_"+str(2))
-	x.RemoveConnection(str(0)+"_"+str(3))
-	var zzz = x.GetNN()
+	for _i in range(500):
+		xxxx.Mutation()
+
+	var zzz = xxxx.GetNN()
 	var yyy = 0
 	pass
 

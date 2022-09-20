@@ -1,4 +1,4 @@
-extends Node
+extends Node;
 var RANDOM = RandomNumberGenerator.new();
 var Perceptron = preload("./Perceptron.gd")
 var Connection = preload("./Connection.gd")
@@ -41,7 +41,8 @@ func AddNode(innov):
 	connection2.Weight = NN.Connections[index].Weight
 	NN.Connections.append(connection1)
 	NN.Connections.append(connection2)
-	
+
+# Still has bugs (sometimes removes input/output perceptrons and sometime loop with non existing connection)
 func RemoveConnection(innov):
 	var index = GetConnectionIndex(innov)
 	var inputIndex = GetPerceptronIndex(NN.Connections[index].Input)
@@ -52,7 +53,7 @@ func RemoveConnection(innov):
 	var oNodes = GetOutputNodes(iNode.Name)
 	var iNodes = GetInputNodes(oNode.Name)
 	
-	if(len(oNodes)==0 and iNode.Type != 'O'):
+	if(len(oNodes)==0 and iNode.Type != 'I'):
 		var connectionList = []
 		for c in NN.Connections:
 			if(c.Out == iNode.Name):
@@ -62,7 +63,7 @@ func RemoveConnection(innov):
 		for c in connectionList:
 			if(c.Out == iNode.Name):
 				RemoveConnection(c.Innov)
-	if(len(iNodes)==0 and oNode.Type != 'I'):
+	if(len(iNodes)==0 and oNode.Type != 'O'):
 		var connectionList = []
 		for c in NN.Connections:
 			if(c.Input == oNode.Name):
@@ -81,14 +82,46 @@ func AddConnection(iname,oname):
 	RANDOM.randomize()
 	var filtered =  FilterWithType()
 	OrderNode(filtered.O)
-	var iOrder = NN.Perceptron[GetPerceptronIndex(iname)].Order
-	var oOrder = NN.Perceptron[GetPerceptronIndex(oname)].Order
+	var iOrder = NN.Perceptrons[GetPerceptronIndex(iname)].Order
+	var oOrder = NN.Perceptrons[GetPerceptronIndex(oname)].Order
 	if(oOrder>iOrder):
 		var tem = iname
 		iname = oname
 		oname = tem
+	if(GetConnectionIndex(str(iname)+"_"+str(oname))!=-1):
+		return
 	var connection = Connection.new(iname,oname,str(iname)+"_"+str(oname))
 	NN.Connections.append(connection)
+
+
+func Mutation():
+    RANDOM.randomize()
+    var case=0
+    var index=0
+    var filteredNodes = FilterWithType();
+
+    if(len(NN.Connections)==0):
+        case = 0
+    else:
+        case = RANDOM.randi_range(0,2)
+        index = RANDOM.randi_range(0,len(NN.Connections)-1)
+
+    match(case):
+        0:
+            var inputNodes=filteredNodes.I + filteredNodes.H;
+            var outputNodes= filteredNodes.O + filteredNodes.H;
+            var input_index = RANDOM.randi_range(0,len(inputNodes)-1);
+            var output_index = RANDOM.randi_range(0,len(outputNodes)-1);
+            var inputNode = inputNodes[input_index]
+            var outputNode = outputNodes[output_index]
+            AddConnection(inputNode.Name,outputNode.Name)
+        1:
+            RemoveConnection(NN.Connections[index].Innov)
+        2:
+           AddNode(NN.Connections[index].Innov)
+
+
+
 
 func GetNewHiddenName():
 	var data = FilterWithType()
