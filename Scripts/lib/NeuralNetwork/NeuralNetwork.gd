@@ -41,9 +41,7 @@ func AddNode(innov):
 	connection2.Weight = NN.Connections[index].Weight
 	NN.Connections.append(connection1)
 	NN.Connections.append(connection2)
-# Recursion has error 
-# recursion is fine, remove connections as well when removing node
-# when looping and updating same list, issue arises
+	
 func RemoveConnection(innov):
 	var index = GetConnectionIndex(innov)
 	var inputIndex = GetPerceptronIndex(NN.Connections[index].Input)
@@ -53,14 +51,26 @@ func RemoveConnection(innov):
 	NN.Connections.remove(index)
 	var oNodes = GetOutputNodes(iNode.Name)
 	var iNodes = GetInputNodes(oNode.Name)
-	if(len(oNodes)==0):
+	
+	if(len(oNodes)==0 and iNode.Type != 'O'):
+		var connectionList = []
+		for c in NN.Connections:
+			if(c.Out == iNode.Name):
+				connectionList.append(c);
 		NN.Perceptrons.remove(inputIndex)
-		for c in NN.Connections:#issue region
+
+		for c in connectionList:
 			if(c.Out == iNode.Name):
 				RemoveConnection(c.Innov)
-	if(len(iNodes)==0):
+	if(len(iNodes)==0 and oNode.Type != 'I'):
+		var connectionList = []
+		for c in NN.Connections:
+			if(c.Input == oNode.Name):
+				connectionList.append(c);
 		NN.Perceptrons.remove(outputIndex)
-		for c in NN.Connections:#issue region
+		
+				
+		for c in connectionList:
 			if(c.Input == oNode.Name):
 				RemoveConnection(c.Innov)
 	return 0
@@ -79,11 +89,6 @@ func AddConnection(iname,oname):
 		oname = tem
 	var connection = Connection.new(iname,oname,str(iname)+"_"+str(oname))
 	NN.Connections.append(connection)
-
-# func RemoveNode(node):
-# 	NN.Perceptrons.remove(node)
-
-# 	pass
 
 func GetNewHiddenName():
 	var data = FilterWithType()
