@@ -6,9 +6,12 @@ var NN = {
 	"Perceptrons":[],
 	"Connections":[]
 }
-var test
+var inputLength
+var outputLength
 
 func _init(inputNo,outputNo):
+	inputLength = inputNo
+	outputLength = outputNo
 	RANDOM.randomize()
 	var outputName = 0
 	for input in range(inputNo):
@@ -29,6 +32,8 @@ func _init(inputNo,outputNo):
 func GetNN():
 	return NN
 
+func SetNN(NN1):
+	NN=NN1
 
 func AddNode(innov):
 	var name = GetNewHiddenName()
@@ -111,6 +116,64 @@ func Mutation():
            AddNode(NN.Connections[index].Innov)
 
 
+func CrossOver(parent2):
+	RANDOM.randomize()
+	var NN2 = parent2.NN
+	var NN_Child = {
+		"Perceptrons":[],
+		"Connections":[]
+	}
+
+	for i in range(inputLength+outputLength):
+		var case = RANDOM.randi_range(0,1)
+		if(case<1):
+				NN_Child.Perceptrons.append(NN.Perceptrons[i])
+		else:
+			NN_Child.Perceptrons.append(NN2.Perceptrons[i])
+		
+	var N1_Innov = []
+	var N2_Innov = []
+	for connection in NN.Connections:
+		N1_Innov.append(connection.Innov)
+	for connection in NN2.Connections:
+		N2_Innov.append(connection.Innov)
+	var int_Innov = Intraction(N1_Innov,N2_Innov)
+
+	for connection in NN2.Connections:
+		if(not connection.Innov  in int_Innov):
+			NN_Child.Connections.append(connection)
+
+	for connection in NN.Connections:
+		if(not connection.Innov  in int_Innov):
+			NN_Child.Connections.append(connection)
+
+	for item in int_Innov:
+		var case = RANDOM.randi_range(0,1)
+		match(case):
+			0:
+				NN_Child.Connections.append(NN.Connections[GetConnectionIndex(item)])
+			1:
+				NN_Child.Connections.append(NN2.Connections[parent2.GetConnectionIndex(item)])
+	var input_nodes = []
+	var output_nodes = []
+	for connection in NN_Child.Connections:
+		input_nodes.append(connection.Input)
+		output_nodes.append(connection.Out)
+	var nodes = Union(input_nodes,output_nodes)
+
+	for node in nodes:
+		var case = RANDOM.randi_range(0,1)
+		match(case):
+			0:
+				for N1_node in NN.Perceptrons:
+					if(N1_node.Name == node and not(N1_node in NN_Child.Perceptrons)):
+						NN_Child.Perceptrons.append(N1_node)
+			1:
+				for N2_node in NN2.Perceptrons:
+					if(N2_node.Name == node and not(N2_node in NN_Child.Perceptrons)):
+						NN_Child.Perceptrons.append(N2_node)
+
+	return NN_Child
 
 
 func GetNewHiddenName():
@@ -188,3 +251,23 @@ func FilterWithType():
 		else:
 			response.H.append(item)
 	return response
+
+func Union(lst1, lst2):
+	var final_list = []
+	for itm in lst1:
+		final_list.append(itm)
+	for itm in lst2:
+		if(not final_list.has(itm)):
+			final_list.append(itm)
+	return final_list
+
+func Intraction(lst1, lst2):
+	var final_list = []
+	for itm in lst1:
+		if(itm in lst2):
+			final_list.append(itm)
+	for itm in lst2:
+		if(itm in lst1):
+			if(not final_list.has(itm)):
+				final_list.append(itm)
+	return final_list

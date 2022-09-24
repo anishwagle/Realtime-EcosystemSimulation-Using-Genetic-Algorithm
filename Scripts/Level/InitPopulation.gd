@@ -15,14 +15,21 @@ var vHeight = 30
 var vWidth = 30
 var networkString
 func _ready():
-	var xxxx =testNeuron.new(2,1)
+	var x1 =testNeuron.new(2,1)
+	var x2 =testNeuron.new(2,1)
+	var x3 =testNeuron.new(2,1)
+
 	# xxxx.AddNode("0_2");
 	# xxxx.AddNode("3_2");
 	# xxxx.RemoveConnection("0_3");
-	for _i in range(20):
-		xxxx.Mutation()
-
-	var zzz = xxxx.GetNN()
+	for _i in range(10):
+		x1.Mutation()
+	var zzz = x1.GetNN()
+	for _i in range(10):
+		x2.Mutation()
+	zzz = x2.GetNN()
+	x3.SetNN(x1.CrossOver(x2))
+	zzz = x3.GetNN()
 	var yyy = 0
 	pass
 
