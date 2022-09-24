@@ -16,8 +16,10 @@ var vWidth = 30
 var networkString
 func _ready():
 	var xxxx =testNeuron.new(2,1)
-
-	for _i in range(500):
+	# xxxx.AddNode("0_2");
+	# xxxx.AddNode("3_2");
+	# xxxx.RemoveConnection("0_3");
+	for _i in range(20):
 		xxxx.Mutation()
 
 	var zzz = xxxx.GetNN()

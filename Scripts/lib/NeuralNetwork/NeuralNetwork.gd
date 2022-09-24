@@ -6,6 +6,7 @@ var NN = {
 	"Perceptrons":[],
 	"Connections":[]
 }
+var test
 
 func _init(inputNo,outputNo):
 	RANDOM.randomize()
@@ -42,49 +43,38 @@ func AddNode(innov):
 	NN.Connections.append(connection1)
 	NN.Connections.append(connection2)
 
-# Still has bugs (sometimes removes input/output perceptrons and sometime loop with non existing connection)
 func RemoveConnection(innov):
 	var index = GetConnectionIndex(innov)
-	var inputIndex = GetPerceptronIndex(NN.Connections[index].Input)
-	var outputIndex = GetPerceptronIndex(NN.Connections[index].Out)
-	var iNode = NN.Perceptrons[inputIndex]
-	var oNode = NN.Perceptrons[outputIndex]
 	NN.Connections.remove(index)
-	var oNodes = GetOutputNodes(iNode.Name)
-	var iNodes = GetInputNodes(oNode.Name)
-	
-	if(len(oNodes)==0 and iNode.Type != 'I'):
-		var connectionList = []
-		for c in NN.Connections:
-			if(c.Out == iNode.Name):
-				connectionList.append(c);
-		NN.Perceptrons.remove(inputIndex)
+	RemoveNodeWithNoConnections()
 
-		for c in connectionList:
-			if(c.Out == iNode.Name):
-				RemoveConnection(c.Innov)
-	if(len(iNodes)==0 and oNode.Type != 'O'):
-		var connectionList = []
-		for c in NN.Connections:
-			if(c.Input == oNode.Name):
-				connectionList.append(c);
-		NN.Perceptrons.remove(outputIndex)
-		
-				
-		for c in connectionList:
-			if(c.Input == oNode.Name):
-				RemoveConnection(c.Innov)
-	return 0
+func RemoveNodeWithNoConnections():
+	var filtered =  FilterWithType()
+	for item in filtered.H:
+		var inputNodes = GetInputNodes(item.Name);
+		var outputNodes = GetOutputNodes(item.Name);
+		if len(inputNodes) == 0 :
+			NN.Perceptrons.remove(GetPerceptronIndex(item.Name))
+			for out in outputNodes:
+				var index = GetConnectionIndex(str(item.Name)+"_"+str(out.Name))
+				NN.Connections.remove(index)
+			RemoveNodeWithNoConnections()
+		if len(outputNodes) == 0:
+			NN.Perceptrons.remove(GetPerceptronIndex(item.Name))
+			for input in inputNodes:
+				var index = GetConnectionIndex(str(input.Name)+"_"+str(item.Name))
+				NN.Connections.remove(index)
+			RemoveNodeWithNoConnections()
 
 func AddConnection(iname,oname):
 	if(iname == oname):
 		return
 	RANDOM.randomize()
 	var filtered =  FilterWithType()
-	OrderNode(filtered.O)
+	OrderNode(filtered.O,len(NN.Perceptrons))
 	var iOrder = NN.Perceptrons[GetPerceptronIndex(iname)].Order
 	var oOrder = NN.Perceptrons[GetPerceptronIndex(oname)].Order
-	if(oOrder>iOrder):
+	if(oOrder<iOrder):
 		var tem = iname
 		iname = oname
 		oname = tem
@@ -134,17 +124,19 @@ func GetNewHiddenName():
 				name = n.Name
 		return name +1
 
-func OrderNode(array , order = 0):
+func OrderNode(array , order ):
 	for node in array:
 		UpdateOrder(node.Name,order)
-
-	for node in array:
 		var inputNodes = GetInputNodes(node.Name)
-		if(len(inputNodes)==0):
-			return
+		if node.Type=="I":
+			UpdateOrder(node.Name,-1)
+			
 		else:
-			OrderNode(inputNodes,order+1)
-
+			OrderNode(inputNodes,order-1)
+	return 0
+# func ResetOrder():
+# 	for item in NN.Perceptrons:
+# 		UpdateOrder(item.Name,0)
 func UpdateOrder(name,order):
 	var index = GetPerceptronIndex(name)
 	NN.Perceptrons[index].Order = order
@@ -174,6 +166,7 @@ func GetInputNodes(name):
 	return response
 
 func GetOutputNodes(name):
+	
 	var response = [];
 	for connection in NN.Connections:
 		if( connection.Input == name):
