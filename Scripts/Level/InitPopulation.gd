@@ -30,7 +30,8 @@ func _ready():
 	zzz = x2.GetNN()
 	x3.SetNN(x1.CrossOver(x2))
 	zzz = x3.GetNN()
-	var yyy = 0
+	var yyy = x3.Calculate([1,1])
+	var p =0
 	pass
 
 func _process(delta):

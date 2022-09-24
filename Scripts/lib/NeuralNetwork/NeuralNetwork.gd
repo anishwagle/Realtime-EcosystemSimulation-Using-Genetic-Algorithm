@@ -1,27 +1,30 @@
 extends Node;
 var RANDOM = RandomNumberGenerator.new();
-var Perceptron = preload("./Perceptron.gd")
+var Perception = preload("./Perception.gd")
 var Connection = preload("./Connection.gd")
+var HashTable = preload("./HashTable.gd")
 var NN = {
-	"Perceptrons":[],
+	"Perceptions":[],
 	"Connections":[]
 }
 var inputLength
 var outputLength
+var HS = HashTable.new();
 
 func _init(inputNo,outputNo):
 	inputLength = inputNo
 	outputLength = outputNo
+
 	RANDOM.randomize()
 	var outputName = 0
 	for input in range(inputNo):
-		var node = Perceptron.new(input,"I")
-		NN.Perceptrons.append(node)
+		var node = Perception.new(input,"I")
+		NN.Perceptions.append(node)
 		outputName = input
 	outputName+=1
 	for output in range(outputNo):
-		var node = Perceptron.new(output+outputName,"O")
-		NN.Perceptrons.append(node)
+		var node = Perception.new(output+outputName,"O")
+		NN.Perceptions.append(node)
 	for input in range(inputNo):
 		for output in range(outputNo):
 			var connection = Connection.new(input,output+outputName,str(input)+"_"+str(output+outputName))
@@ -37,8 +40,8 @@ func SetNN(NN1):
 
 func AddNode(innov):
 	var name = GetNewHiddenName()
-	var node = Perceptron.new(name,"H")
-	NN.Perceptrons.append(node)
+	var node = Perception.new(name,"H")
+	NN.Perceptions.append(node)
 	var index = GetConnectionIndex(innov)
 	NN.Connections[index].Enable = false
 	var connection1 = Connection.new(NN.Connections[index].Input,name,str(NN.Connections[index].Input)+"_"+str(name))
@@ -59,13 +62,13 @@ func RemoveNodeWithNoConnections():
 		var inputNodes = GetInputNodes(item.Name);
 		var outputNodes = GetOutputNodes(item.Name);
 		if len(inputNodes) == 0 :
-			NN.Perceptrons.remove(GetPerceptronIndex(item.Name))
+			NN.Perceptions.remove(GetPerceptionIndex(item.Name))
 			for out in outputNodes:
 				var index = GetConnectionIndex(str(item.Name)+"_"+str(out.Name))
 				NN.Connections.remove(index)
 			RemoveNodeWithNoConnections()
 		if len(outputNodes) == 0:
-			NN.Perceptrons.remove(GetPerceptronIndex(item.Name))
+			NN.Perceptions.remove(GetPerceptionIndex(item.Name))
 			for input in inputNodes:
 				var index = GetConnectionIndex(str(input.Name)+"_"+str(item.Name))
 				NN.Connections.remove(index)
@@ -76,9 +79,9 @@ func AddConnection(iname,oname):
 		return
 	RANDOM.randomize()
 	var filtered =  FilterWithType()
-	OrderNode(filtered.O,len(NN.Perceptrons))
-	var iOrder = NN.Perceptrons[GetPerceptronIndex(iname)].Order
-	var oOrder = NN.Perceptrons[GetPerceptronIndex(oname)].Order
+	OrderNode(filtered.O,len(NN.Perceptions))
+	var iOrder = NN.Perceptions[GetPerceptionIndex(iname)].Order
+	var oOrder = NN.Perceptions[GetPerceptionIndex(oname)].Order
 	if(oOrder<iOrder):
 		var tem = iname
 		iname = oname
@@ -120,16 +123,16 @@ func CrossOver(parent2):
 	RANDOM.randomize()
 	var NN2 = parent2.NN
 	var NN_Child = {
-		"Perceptrons":[],
+		"Perceptions":[],
 		"Connections":[]
 	}
 
 	for i in range(inputLength+outputLength):
 		var case = RANDOM.randi_range(0,1)
 		if(case<1):
-				NN_Child.Perceptrons.append(NN.Perceptrons[i])
+				NN_Child.Perceptions.append(NN.Perceptions[i])
 		else:
-			NN_Child.Perceptrons.append(NN2.Perceptrons[i])
+			NN_Child.Perceptions.append(NN2.Perceptions[i])
 		
 	var N1_Innov = []
 	var N2_Innov = []
@@ -165,21 +168,71 @@ func CrossOver(parent2):
 		var case = RANDOM.randi_range(0,1)
 		match(case):
 			0:
-				for N1_node in NN.Perceptrons:
-					if(N1_node.Name == node and not(N1_node in NN_Child.Perceptrons)):
-						NN_Child.Perceptrons.append(N1_node)
+				for N1_node in NN.Perceptions:
+					if(N1_node.Name == node and not(N1_node in NN_Child.Perceptions)):
+						NN_Child.Perceptions.append(N1_node)
 			1:
-				for N2_node in NN2.Perceptrons:
-					if(N2_node.Name == node and not(N2_node in NN_Child.Perceptrons)):
-						NN_Child.Perceptrons.append(N2_node)
+				for N2_node in NN2.Perceptions:
+					if(N2_node.Name == node and not(N2_node in NN_Child.Perceptions)):
+						NN_Child.Perceptions.append(N2_node)
 
 	return NN_Child
 
+func Activation(output):
+	var e = 2.718281828
+	return output/(1+pow(e,-output))
+
+func Calculate(inputList):
+	var filtered =  FilterWithType()
+	for i in range(inputLength):
+		NN.Perceptions[i].Output = inputList[i]
+	var result = []
+	for item in filtered.O:
+		result.append(CalculateSum(item))
+	return result
+	
+func CalculateSum(output):
+	var inputs = []
+	var sum
+	var connectedNodes = GetInputConnections(output.Name)
+	for input in connectedNodes:
+		var tem = HS.GetOutputForId(input.Input)
+		if(tem != null):
+			inputs.append(tem)
+		elif len(GetInputNodes(input.Input))==0:
+			var result = NN.Perceptions[GetPerceptionIndex(input.Input)]
+			if(result!=null):
+				var s = {
+					Input = result.Output,
+					Weight = input.Weight,
+					Enable = input.Enable
+				}
+				inputs.append(s)
+				HS.AddToDec(result.Name,s)
+		else:
+			var newRes = NN.Perceptions[GetPerceptionIndex(input.Input)]
+			if(newRes != null):
+				sum = CalculateSum(newRes);
+				var s = {
+					Input = sum,
+					Weight = input.Weight,
+					Enable = input.Enable
+				}
+				HS.AddToDec(newRes.Name,s)
+	sum = CalculateOutput(inputs)
+	return sum
+
+func CalculateOutput(inputs):
+	var output = 0
+	for input in inputs:
+		if(input.Enable):
+			output+= input.Input * input.Weight
+	return Activation(output)
 
 func GetNewHiddenName():
 	var data = FilterWithType()
 	if(len(data.H)==0):
-		return len(NN.Perceptrons)
+		return len(NN.Perceptions)
 	else:
 		var name = 0
 		for n in data.H:
@@ -198,15 +251,15 @@ func OrderNode(array , order ):
 			OrderNode(inputNodes,order-1)
 	return 0
 # func ResetOrder():
-# 	for item in NN.Perceptrons:
+# 	for item in NN.Perceptions:
 # 		UpdateOrder(item.Name,0)
 func UpdateOrder(name,order):
-	var index = GetPerceptronIndex(name)
-	NN.Perceptrons[index].Order = order
+	var index = GetPerceptionIndex(name)
+	NN.Perceptions[index].Order = order
 
-func GetPerceptronIndex(name):
+func GetPerceptionIndex(name):
 	var index = -1;
-	for item in NN.Perceptrons:
+	for item in NN.Perceptions:
 		index += 1
 		if(name == item.Name):
 			return index
@@ -224,8 +277,15 @@ func GetInputNodes(name):
 	var response = [];
 	for connection in NN.Connections:
 		if( connection.Out == name):
-			var index = GetPerceptronIndex(connection.Input)
-			response.append(NN.Perceptrons[index])
+			var index = GetPerceptionIndex(connection.Input)
+			response.append(NN.Perceptions[index])
+	return response
+
+func GetInputConnections(name):
+	var response = [];
+	for connection in NN.Connections:
+		if( connection.Out == name):
+			response.append(connection)
 	return response
 
 func GetOutputNodes(name):
@@ -233,8 +293,8 @@ func GetOutputNodes(name):
 	var response = [];
 	for connection in NN.Connections:
 		if( connection.Input == name):
-			var index = GetPerceptronIndex(connection.Out)
-			response.append(NN.Perceptrons[index])
+			var index = GetPerceptionIndex(connection.Out)
+			response.append(NN.Perceptions[index])
 	return response
 
 func FilterWithType():
@@ -243,7 +303,7 @@ func FilterWithType():
 		"H":[],
 		"O":[]
 	}
-	for item in NN.Perceptrons:
+	for item in NN.Perceptions:
 		if item.Type == "I":
 			response.I.append(item)
 		elif item.Type == "O":
