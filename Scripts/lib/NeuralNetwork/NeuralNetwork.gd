@@ -5,11 +5,13 @@ var Connection = preload("./Connection.gd")
 var HashTable = preload("./HashTable.gd")
 var NN = {
 	"Perceptions":[],
-	"Connections":[]
+	"Connections":[],
+	"Fitness" : 0
 }
 var inputLength
 var outputLength
 var HS = HashTable.new();
+var OrderHs = HashTable.new();
 
 func _init(inputNo,outputNo):
 	inputLength = inputNo
@@ -31,7 +33,8 @@ func _init(inputNo,outputNo):
 			NN.Connections.append(connection)
 
 
-
+func SetFitness(fit):
+	NN.Fitness = fit
 func GetNN():
 	return NN
 
@@ -79,7 +82,7 @@ func AddConnection(iname,oname):
 		return
 	RANDOM.randomize()
 	var filtered =  FilterWithType()
-	OrderNode(filtered.O,len(NN.Perceptions))
+	OrderNode(filtered.O)
 	var iOrder = NN.Perceptions[GetPerceptionIndex(iname)].Order
 	var oOrder = NN.Perceptions[GetPerceptionIndex(oname)].Order
 	if(oOrder<iOrder):
@@ -93,30 +96,30 @@ func AddConnection(iname,oname):
 
 
 func Mutation():
-    RANDOM.randomize()
-    var case=0
-    var index=0
-    var filteredNodes = FilterWithType();
+	RANDOM.randomize()
+	var case=2
+	var index=0
+	var filteredNodes = FilterWithType();
 
-    if(len(NN.Connections)==0):
-        case = 0
-    else:
-        case = RANDOM.randi_range(0,2)
-        index = RANDOM.randi_range(0,len(NN.Connections)-1)
+	if(len(NN.Connections)==0):
+		case = 0
+	else:
+		case = RANDOM.randi_range(0,2)
+		index = RANDOM.randi_range(0,len(NN.Connections)-1)
 
-    match(case):
-        0:
-            var inputNodes=filteredNodes.I + filteredNodes.H;
-            var outputNodes= filteredNodes.O + filteredNodes.H;
-            var input_index = RANDOM.randi_range(0,len(inputNodes)-1);
-            var output_index = RANDOM.randi_range(0,len(outputNodes)-1);
-            var inputNode = inputNodes[input_index]
-            var outputNode = outputNodes[output_index]
-            AddConnection(inputNode.Name,outputNode.Name)
-        1:
-            RemoveConnection(NN.Connections[index].Innov)
-        2:
-           AddNode(NN.Connections[index].Innov)
+	match(case):
+		0:
+			var inputNodes=filteredNodes.I + filteredNodes.H;
+			var outputNodes= filteredNodes.O + filteredNodes.H;
+			var input_index = RANDOM.randi_range(0,len(inputNodes)-1);
+			var output_index = RANDOM.randi_range(0,len(outputNodes)-1);
+			var inputNode = inputNodes[input_index]
+			var outputNode = outputNodes[output_index]
+			AddConnection(inputNode.Name,outputNode.Name)
+		1:
+			RemoveConnection(NN.Connections[index].Innov)
+		2:
+			AddNode(NN.Connections[index].Innov)
 
 
 func CrossOver(parent2):
@@ -162,19 +165,22 @@ func CrossOver(parent2):
 	for connection in NN_Child.Connections:
 		input_nodes.append(connection.Input)
 		output_nodes.append(connection.Out)
-	var nodes = Union(input_nodes,output_nodes)
+	var perceptions = []
+	for p in NN_Child.Perceptions:
+		perceptions.append(p.Name)
+	var nodes = array_unique( Union(input_nodes,output_nodes))
 
 	for node in nodes:
 		var case = RANDOM.randi_range(0,1)
 		match(case):
 			0:
-				for N1_node in NN.Perceptions:
-					if(N1_node.Name == node and not(N1_node in NN_Child.Perceptions)):
-						NN_Child.Perceptions.append(N1_node)
+				var N1_node = NN.Perceptions[GetPerceptionIndex(node)]
+				if(not(N1_node.Name in perceptions)):
+					NN_Child.Perceptions.append(N1_node)
 			1:
-				for N2_node in NN2.Perceptions:
-					if(N2_node.Name == node and not(N2_node in NN_Child.Perceptions)):
-						NN_Child.Perceptions.append(N2_node)
+				var N2_node = NN2.Perceptions[parent2.GetPerceptionIndex(node)]
+				if(not(N2_node.Name in perceptions)):
+					NN_Child.Perceptions.append(N2_node)
 
 	return NN_Child
 
@@ -183,44 +189,37 @@ func Activation(output):
 	return output/(1+pow(e,-output))
 
 func Calculate(inputList):
-	var filtered =  FilterWithType()
 	for i in range(inputLength):
 		NN.Perceptions[i].Output = inputList[i]
-	var result = []
-	for item in filtered.O:
-		result.append(CalculateSum(item))
+	var result = CalculateSum()
 	return result
 	
-func CalculateSum(output):
-	var inputs = []
-	var sum
-	var connectedNodes = GetInputConnections(output.Name)
-	for input in connectedNodes:
-		var tem = HS.GetOutputForId(input.Input)
-		if(tem != null):
-			inputs.append(tem)
-		elif len(GetInputNodes(input.Input))==0:
-			var result = NN.Perceptions[GetPerceptionIndex(input.Input)]
-			if(result!=null):
+func sort_perceptions(a,b):
+	return a.Order < b.Order;
+func CalculateSum():
+	var filtered =  FilterWithType()
+	OrderNode(filtered.O)
+	NN.Perceptions.sort_custom(self,"sort_perceptions")
+	for input in NN.Perceptions:
+		if(input.Type != "I"):
+			var inputNodes = GetInputNodes(input.Name);
+			var inputs = []
+			
+			for i in inputNodes:
+				var conn = GetConnectionIndex(str(input.Name)+"_"+str(i.Name))
+				var connection = NN.Connections[conn]
 				var s = {
-					Input = result.Output,
-					Weight = input.Weight,
-					Enable = input.Enable
+					Input = i.Output,
+					Weight = connection.Weight,
+					Enable = connection.Enable
 				}
 				inputs.append(s)
-				HS.AddToDec(result.Name,s)
-		else:
-			var newRes = NN.Perceptions[GetPerceptionIndex(input.Input)]
-			if(newRes != null):
-				sum = CalculateSum(newRes);
-				var s = {
-					Input = sum,
-					Weight = input.Weight,
-					Enable = input.Enable
-				}
-				HS.AddToDec(newRes.Name,s)
-	sum = CalculateOutput(inputs)
-	return sum
+			input.Output = CalculateOutput(inputs)
+	filtered =  FilterWithType()
+	var result = []
+	for o in filtered.O:
+		result.append(o.Output)
+	return result
 
 func CalculateOutput(inputs):
 	var output = 0
@@ -240,19 +239,22 @@ func GetNewHiddenName():
 				name = n.Name
 		return name +1
 
-func OrderNode(array , order ):
+func OrderNode(array):
+	var order = 0
 	for node in array:
-		UpdateOrder(node.Name,order)
-		var inputNodes = GetInputNodes(node.Name)
-		if node.Type=="I":
+		var tem = OrderHs.GetOutputForId(node.Name)	
+		if(tem != null):
+			if order<tem: order = tem+1
+		elif node.Type=="I":
+			OrderHs.AddToDec(node.Name,-1)
 			UpdateOrder(node.Name,-1)
-			
 		else:
-			OrderNode(inputNodes,order-1)
-	return 0
-# func ResetOrder():
-# 	for item in NN.Perceptions:
-# 		UpdateOrder(item.Name,0)
+			var t = OrderNode(GetInputNodes(node.Name))
+			OrderHs.AddToDec(node.Name,t)
+			UpdateOrder(node.Name,t)
+			if(order < t):order = t +1
+	return order
+
 func UpdateOrder(name,order):
 	var index = GetPerceptionIndex(name)
 	NN.Perceptions[index].Order = order
@@ -331,3 +333,12 @@ func Intraction(lst1, lst2):
 			if(not final_list.has(itm)):
 				final_list.append(itm)
 	return final_list
+
+func array_unique(array: Array) -> Array:
+	var unique: Array = []
+
+	for item in array:
+		if not unique.has(item):
+			unique.append(item)
+
+	return unique

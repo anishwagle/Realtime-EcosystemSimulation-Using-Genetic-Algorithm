@@ -15,25 +15,74 @@ var vHeight = 30
 var vWidth = 30
 var networkString
 func _ready():
-	var x1 =testNeuron.new(2,1)
-	var x2 =testNeuron.new(2,1)
-	var x3 =testNeuron.new(2,1)
-
-	# xxxx.AddNode("0_2");
-	# xxxx.AddNode("3_2");
-	# xxxx.RemoveConnection("0_3");
-	for _i in range(10):
-		x1.Mutation()
-	var zzz = x1.GetNN()
-	for _i in range(10):
-		x2.Mutation()
-	zzz = x2.GetNN()
-	x3.SetNN(x1.CrossOver(x2))
-	zzz = x3.GetNN()
-	var yyy = x3.Calculate([1,1])
+	
+#	var x1 =testNeuron.new(2,1)
+#	var x2 =testNeuron.new(2,1)
+#	var x3 =testNeuron.new(2,1)
+#
+#	var zzz = x3.GetNN()
+#	var yyy = x1.Calculate([1,1])
+	
+#	Define Training Data
+	var data = [
+		{
+			"I":[0,0],
+			"O":0
+		},
+		{
+			"I":[0,1],
+			"O":1
+		},
+		{
+			"I":[1,0],
+			"O":1
+		},
+		{
+			"I":[1,1],
+			"O":0
+		}
+	]
+	
+#	AIs
+	var ais = [];
+	for _i in range(6):
+		ais.append(testNeuron.new(2,1))
+	
+#	Train
+	var counter = 0
+	while counter<100:
+		for d in data:
+			var temAi = []
+	#		ais.sort_custom(self,"sort_ai")
+			
+			for _i in range(9):
+				random.randomize()		
+				var tem = testNeuron.new(2,1)
+				tem.SetNN(ais[random.randi_range(0,5)].CrossOver(ais[random.randi_range(0,5)]))
+				if(1>random.randi_range(0,10)):
+					tem.Mutation()
+				temAi.append(tem)
+			ais = temAi
+			
+			for ai in ais:
+				var fitness = 0;
+				var output = abs(ai.Calculate(d.I)[0]);
+				fitness = abs(d.O - output)
+				ai.SetFitness(fitness)
+				var test123 = 0
+			ais.sort_custom(self,"sort_ai")
+		
+		counter+=1
+	var resul1 = abs(ais[0].Calculate([1,1])[0]);
+	var resul2 = abs(ais[0].Calculate([0,1])[0]);
+	var resul3 = abs(ais[0].Calculate([1,0])[0]);
+	var resul4 = abs(ais[0].Calculate([0,0])[0]);
 	var p =0
 	pass
-
+	
+func sort_ai(a,b):
+	return a.NN.Fitness < b.NN.Fitness;
+	
 func _process(delta):
 	if(get_child_count()==0):
 		random.randomize()
